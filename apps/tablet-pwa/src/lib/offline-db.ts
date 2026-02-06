@@ -93,6 +93,27 @@ export async function queueAck(
     timestamp: Date.now(),
     synced: false,
   });
+
+  // Register background sync to flush acks when connectivity restores
+  await registerBackgroundSync('sync-acknowledgments');
+}
+
+/**
+ * Register a background sync tag. Silently fails if unsupported.
+ */
+async function registerBackgroundSync(tag: string): Promise<void> {
+  if (typeof navigator === 'undefined') return;
+  if (!('serviceWorker' in navigator)) return;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    // SyncManager is non-standard — use type assertion
+    if ('sync' in reg) {
+      await (reg as ServiceWorkerRegistration & { sync: { register(t: string): Promise<void> } }).sync.register(tag);
+    }
+  } catch {
+    // Background Sync API not supported or permission denied — silent fallback
+  }
 }
 
 /**

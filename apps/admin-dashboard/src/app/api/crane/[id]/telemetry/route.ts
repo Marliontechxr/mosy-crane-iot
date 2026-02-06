@@ -3,12 +3,20 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { TelemetryHistoryResponse, TelemetryPoint } from '@mosy/shared-types';
+import { isDemoMode, getDemoTelemetry } from '@/lib/demo-data';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  if (isDemoMode()) {
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get('limit') ?? '60', 10);
+    return NextResponse.json(getDemoTelemetry(id, limit));
+  }
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(

@@ -3,12 +3,18 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { ShiftSummary } from '@mosy/shared-types';
+import { isDemoMode, getDemoShifts } from '@/lib/demo-data';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  if (isDemoMode()) {
+    return NextResponse.json(getDemoShifts(id));
+  }
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(

@@ -3,8 +3,14 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { SignalRNegotiateResponse } from '@mosy/shared-types';
+import { isDemoMode } from '@/lib/demo-data';
 
 export async function GET(req: NextRequest) {
+  if (isDemoMode()) {
+    // In demo mode, return a special URL that the client detects to use demo SignalR
+    return NextResponse.json({ url: 'demo://signalr', accessToken: 'demo-token' });
+  }
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(

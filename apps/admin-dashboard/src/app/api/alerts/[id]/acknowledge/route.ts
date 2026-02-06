@@ -3,12 +3,18 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { AcknowledgeResponse } from '@mosy/shared-types';
+import { isDemoMode, getDemoAcknowledge } from '@/lib/demo-data';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  if (isDemoMode()) {
+    return NextResponse.json(getDemoAcknowledge());
+  }
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(

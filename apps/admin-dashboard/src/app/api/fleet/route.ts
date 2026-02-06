@@ -3,6 +3,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { FleetResponse } from '@mosy/shared-types';
+import { isDemoMode, getDemoFleet } from '@/lib/demo-data';
 
 /** Validate bearer token exists (actual validation happens at Azure Functions). */
 function validateAuth(req: NextRequest): string | null {
@@ -12,6 +13,10 @@ function validateAuth(req: NextRequest): string | null {
 }
 
 export async function GET(req: NextRequest) {
+  if (isDemoMode()) {
+    return NextResponse.json(getDemoFleet());
+  }
+
   const token = validateAuth(req);
   if (!token) {
     return NextResponse.json(

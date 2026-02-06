@@ -289,6 +289,34 @@ services:
       retries: 3
       start_period: 15s
 
+  # ---------------------------------------------------------------------------
+  # Sensor Simulator — demo profile only (not started by default)
+  # Usage: docker compose --profile demo up -d
+  # ---------------------------------------------------------------------------
+  sensor-simulator:
+    image: python:3.11-slim
+    container_name: mosy-sensor-simulator
+    profiles:
+      - demo
+    working_dir: /app
+    volumes:
+      - ../../tools/sensor-simulator:/app:ro
+    command: ["python", "main.py", "--scenario", "full-demo", "--crane-id", "${CRANE_ID:-DEMO-001}", "--duration", "0"]
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+    networks:
+      - mosy-edge-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
 networks:
   mosy-edge-net:
     driver: bridge

@@ -3,8 +3,13 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { OperatorListItem } from '@mosy/shared-types';
+import { isDemoMode, getDemoOperators } from '@/lib/demo-data';
 
 export async function GET(req: NextRequest) {
+  if (isDemoMode()) {
+    return NextResponse.json(getDemoOperators());
+  }
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(

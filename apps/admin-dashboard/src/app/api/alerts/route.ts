@@ -3,8 +3,19 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type { AlertListItem, AlertLevel } from '@mosy/shared-types';
+import { isDemoMode, getDemoAlerts } from '@/lib/demo-data';
 
 export async function GET(req: NextRequest) {
+  if (isDemoMode()) {
+    const url = new URL(req.url);
+    const levelFilter = url.searchParams.get('level') as AlertLevel | null;
+    let alerts = getDemoAlerts();
+    if (levelFilter) {
+      alerts = alerts.filter((a) => a.level === levelFilter);
+    }
+    return NextResponse.json(alerts);
+  }
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(

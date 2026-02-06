@@ -33,6 +33,7 @@ REPORT_FILE="${PROJECT_ROOT}/validation-report.txt"
 DURATION=300  # 5 minutes
 SKIP_BUILD=false
 CRANE_ID="POC-001"
+DEMO_MODE=false
 
 # Parse args
 while [[ $# -gt 0 ]]; do
@@ -40,6 +41,7 @@ while [[ $# -gt 0 ]]; do
         --duration) DURATION="$2"; shift 2 ;;
         --skip-build) SKIP_BUILD=true; shift ;;
         --crane-id) CRANE_ID="$2"; shift 2 ;;
+        --demo) DEMO_MODE=true; CRANE_ID="DEMO-001"; SKIP_BUILD=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -117,11 +119,18 @@ fi
 
 echo "  Starting edge services..."
 cd "$EDGE_DIR"
-CRANE_ID="$CRANE_ID" docker compose up -d --remove-orphans
+if [[ "$DEMO_MODE" == "true" ]]; then
+    echo "  Demo mode — starting with --profile demo (includes sensor simulator)"
+    CRANE_ID="$CRANE_ID" docker compose --profile demo up -d --remove-orphans
+else
+    CRANE_ID="$CRANE_ID" docker compose up -d --remove-orphans
+fi
 
 # Wait for services to start
-echo "  Waiting for services to initialize (60s)..."
-sleep 60
+WAIT_TIME=60
+if [[ "$DEMO_MODE" == "true" ]]; then WAIT_TIME=30; fi
+echo "  Waiting for services to initialize (${WAIT_TIME}s)..."
+sleep "$WAIT_TIME"
 
 # =============================================================================
 # PHASE 2: Health Checks
@@ -261,6 +270,29 @@ done
 
 if [[ "$ERROR_FOUND" == "false" ]]; then
     pass "No excessive errors in container logs"
+fi
+
+# =============================================================================
+# PHASE 7: Dashboard Check (if running)
+# =============================================================================
+if curl -sf http://localhost:3000 >/dev/null 2>&1; then
+    section "Phase 7: Admin Dashboard"
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+    if [[ "$HTTP_CODE" == "200" ]]; then
+        pass "Admin Dashboard responding (HTTP 200)"
+    else
+        warn "Admin Dashboard responded with HTTP $HTTP_CODE"
+    fi
+
+    # Check API endpoint
+    API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/fleet)
+    if [[ "$API_CODE" == "200" ]]; then
+        pass "Dashboard API /api/fleet responding"
+    elif [[ "$API_CODE" == "401" ]]; then
+        pass "Dashboard API /api/fleet responding (auth required — expected)"
+    else
+        warn "Dashboard API /api/fleet returned HTTP $API_CODE"
+    fi
 fi
 
 # =============================================================================

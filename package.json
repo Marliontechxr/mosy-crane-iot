@@ -15,7 +15,13 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "demo": "bash scripts/demo-start.sh",
+    "simulate": "python tools/sensor-simulator/main.py --scenario full-demo",
+    "validate": "bash scripts/poc-validate.sh --demo",
+    "deploy:infra": "bash infra/scripts/deploy.sh",
+    "deploy:functions": "cd functions && func azure functionapp publish mosy-functions-dev",
+    "deploy:dashboard": "cd apps/admin-dashboard && pnpm build"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
