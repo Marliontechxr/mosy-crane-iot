@@ -1,0 +1,5 @@
+# MOSY Edge Services — Base Python Dependencies
+# paho-mqtt pinned to 1.6.1 due to azure-iot-device <2.0 constraint
+paho-mqtt==1.6.1
+azure-iot-device==2.14.0
+structlog==24.4.0
