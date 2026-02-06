@@ -1,0 +1,67 @@
+"""MOSY MQTT Schema Definitions — Python dataclasses mirroring TypeScript types."""
+
+from mosy_schemas.mqtt_types import (
+    BoomTelemetry,
+    CabinTelemetry,
+    DashboardOCR,
+    FusedTelemetry,
+    BoomCameraInference,
+    CabinCameraInference,
+    AlertMessage,
+    LiftStateUpdate,
+    OperatorStateUpdate,
+    EngineStateUpdate,
+    CalibrationUpdate,
+    CommandMessage,
+    DiagnosticMessage,
+    MQTT_TOPICS,
+    build_topic,
+)
+
+from mosy_schemas.cosmos_types import (
+    TelemetryDocument,
+    AlertDocument,
+    ShiftDocument,
+    LiftDocument,
+    CraneDocument,
+    OperatorDocument,
+    SiteDocument,
+    CalibrationDocument,
+    DiagnosticsDocument,
+    IncidentDocument,
+    COSMOS_CONTAINERS,
+    COSMOS_DATABASE,
+)
+
+from mosy_schemas.validators import validate_mqtt_message
+
+__all__ = [
+    "BoomTelemetry",
+    "CabinTelemetry",
+    "DashboardOCR",
+    "FusedTelemetry",
+    "BoomCameraInference",
+    "CabinCameraInference",
+    "AlertMessage",
+    "LiftStateUpdate",
+    "OperatorStateUpdate",
+    "EngineStateUpdate",
+    "CalibrationUpdate",
+    "CommandMessage",
+    "DiagnosticMessage",
+    "TelemetryDocument",
+    "AlertDocument",
+    "ShiftDocument",
+    "LiftDocument",
+    "CraneDocument",
+    "OperatorDocument",
+    "SiteDocument",
+    "CalibrationDocument",
+    "DiagnosticsDocument",
+    "IncidentDocument",
+    "MQTT_TOPICS",
+    "COSMOS_CONTAINERS",
+    "COSMOS_DATABASE",
+    "build_topic",
+    "validate_mqtt_message",
+]

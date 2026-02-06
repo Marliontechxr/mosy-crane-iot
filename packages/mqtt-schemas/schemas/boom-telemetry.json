@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BoomTelemetry",
+  "description": "MQTT message from ESP32-S3 boom unit at 10Hz",
+  "type": "object",
+  "required": ["timestamp", "crane_id", "sequence", "lidar", "imu", "radar"],
+  "properties": {
+    "timestamp": { "type": "number" },
+    "crane_id": { "type": "string" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "lidar": {
+      "type": "object",
+      "required": ["distance_mm", "signal_strength", "status"],
+      "properties": {
+        "distance_mm": { "type": "number" },
+        "signal_strength": { "type": "number", "minimum": 0, "maximum": 100 },
+        "status": { "type": "string", "enum": ["good", "weak", "out_of_range"] }
+      }
+    },
+    "imu": {
+      "type": "object",
+      "required": ["accel_x", "accel_y", "accel_z", "gyro_x", "gyro_y", "gyro_z", "mag_x", "mag_y", "mag_z", "euler_roll", "euler_pitch", "euler_yaw", "temperature"],
+      "properties": {
+        "accel_x": { "type": "number" },
+        "accel_y": { "type": "number" },
+        "accel_z": { "type": "number" },
+        "gyro_x": { "type": "number" },
+        "gyro_y": { "type": "number" },
+        "gyro_z": { "type": "number" },
+        "mag_x": { "type": "number" },
+        "mag_y": { "type": "number" },
+        "mag_z": { "type": "number" },
+        "euler_roll": { "type": "number" },
+        "euler_pitch": { "type": "number" },
+        "euler_yaw": { "type": "number" },
+        "temperature": { "type": "number" }
+      }
+    },
+    "radar": {
+      "type": "object",
+      "required": ["motion_detected", "distance_m", "target_count", "presence_status"],
+      "properties": {
+        "motion_detected": { "type": "boolean" },
+        "distance_m": { "type": "number" },
+        "target_count": { "type": "integer", "minimum": 0 },
+        "presence_status": { "type": "string", "enum": ["stationary", "moving", "none"] }
+      }
+    }
+  }
+}

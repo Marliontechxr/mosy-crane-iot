@@ -1,0 +1,28 @@
+{
+  "name": "mosy-crane-iot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MOSY — Mobile Crane Operator Safety & Productivity System",
+  "author": "Balanetra Technologies",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.7.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.4.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FusedTelemetry",
+  "description": "Fused and validated telemetry at 1Hz, sent to cloud",
+  "type": "object",
+  "required": ["timestamp", "crane_id", "sequence", "load", "position", "motion", "environment", "safety_flags", "status"],
+  "properties": {
+    "timestamp": { "type": "number" },
+    "crane_id": { "type": "string" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "load": {
+      "type": "object",
+      "required": ["value_tonnes", "source", "confidence", "timestamp_source"],
+      "properties": {
+        "value_tonnes": { "type": "number", "minimum": 0 },
+        "source": { "type": "string", "const": "ocr" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "timestamp_source": { "type": "number" }
+      }
+    },
+    "position": {
+      "type": "object",
+      "required": ["boom_angle_degrees", "boom_distance_m", "hook_height_m", "source_angle", "source_distance", "confidence"],
+      "properties": {
+        "boom_angle_degrees": { "type": "number" },
+        "boom_distance_m": { "type": "number", "minimum": 0 },
+        "hook_height_m": { "type": "number" },
+        "source_angle": { "type": "string", "const": "ocr" },
+        "source_distance": { "type": "string", "const": "lidar" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "motion": {
+      "type": "object",
+      "required": ["acceleration_vector", "angular_velocity", "source"],
+      "properties": {
+        "acceleration_vector": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+        "angular_velocity": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+        "source": { "type": "string", "const": "imu" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["wind_speed_kmh", "wind_direction_degrees", "temperature_c", "hazard_zone_motion"],
+      "properties": {
+        "wind_speed_kmh": { "type": "number", "minimum": 0 },
+        "wind_direction_degrees": { "type": "number", "minimum": 0, "maximum": 360 },
+        "temperature_c": { "type": "number" },
+        "hazard_zone_motion": { "type": "boolean" }
+      }
+    },
+    "safety_flags": {
+      "type": "object",
+      "required": ["load_over_limit", "wind_excessive", "operator_present", "operator_drowsy", "uncommanded_motion"],
+      "properties": {
+        "load_over_limit": { "type": "boolean" },
+        "wind_excessive": { "type": "boolean" },
+        "operator_present": { "type": "boolean" },
+        "operator_drowsy": { "type": "boolean" },
+        "uncommanded_motion": { "type": "boolean" }
+      }
+    },
+    "status": { "type": "string", "enum": ["valid", "degraded", "error"] },
+    "degradation_reason": { "type": "string" }
+  }
+}

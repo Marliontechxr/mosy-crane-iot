@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CabinTelemetry",
+  "description": "MQTT message from RPi5 cabin hub at 10Hz",
+  "type": "object",
+  "required": ["timestamp", "crane_id", "sequence", "anemometer", "cabin_camera", "environmental"],
+  "properties": {
+    "timestamp": { "type": "number" },
+    "crane_id": { "type": "string" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "anemometer": {
+      "type": "object",
+      "required": ["wind_speed_kmh", "wind_direction_degrees", "status"],
+      "properties": {
+        "wind_speed_kmh": { "type": "number", "minimum": 0 },
+        "wind_direction_degrees": { "type": "number", "minimum": 0, "maximum": 360 },
+        "status": { "type": "string", "enum": ["good", "error"] }
+      }
+    },
+    "cabin_camera": {
+      "type": "object",
+      "required": ["inference_status", "face_detected", "face_confidence", "face_bounding_box"],
+      "properties": {
+        "inference_status": { "type": "string", "enum": ["processing", "ready", "error"] },
+        "face_detected": { "type": "boolean" },
+        "face_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "face_bounding_box": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": ["x", "y", "width", "height"],
+              "properties": {
+                "x": { "type": "number" },
+                "y": { "type": "number" },
+                "width": { "type": "number" },
+                "height": { "type": "number" }
+              }
+            },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "environmental": {
+      "type": "object",
+      "required": ["temperature_c", "humidity_percent", "cabin_door_open", "seatbelt_fastened"],
+      "properties": {
+        "temperature_c": { "type": "number" },
+        "humidity_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "cabin_door_open": { "type": "boolean" },
+        "seatbelt_fastened": { "type": ["boolean", "null"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AlertMessage",
+  "description": "Alert message published to mosy/{crane_id}/alerts/{level}",
+  "type": "object",
+  "required": ["timestamp", "crane_id", "alert_id", "level", "type", "title", "description", "source", "values", "acknowledgement_required", "auto_recovery"],
+  "properties": {
+    "timestamp": { "type": "number" },
+    "crane_id": { "type": "string" },
+    "alert_id": { "type": "string" },
+    "level": { "type": "string", "enum": ["info", "warning", "critical"] },
+    "type": { "type": "string" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "source": { "type": "string", "enum": ["ocr", "imu", "lidar", "camera", "system"] },
+    "values": { "type": "object" },
+    "acknowledgement_required": { "type": "boolean" },
+    "auto_recovery": { "type": "boolean" },
+    "actions": { "type": "array", "items": { "type": "string" } }
+  }
+}

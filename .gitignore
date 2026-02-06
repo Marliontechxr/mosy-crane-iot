@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+local.settings.json
+
+# Azure
+.azure/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+.eggs/
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Models (large files)
+models/
+!models/.gitkeep
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Firmware build
+.pio/
+firmware/esp32-boom/.pio/
+
+# OS
+Thumbs.db
