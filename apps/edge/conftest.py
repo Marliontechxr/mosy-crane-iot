@@ -16,6 +16,9 @@ _SERVICE_MAP = {
     "state-engine": "state_engine",
     "mqtt-bridge": "mqtt_bridge",
     "iot-agent": "iot_agent",
+    "ocr-service": "ocr_service",
+    "vision-service": "vision_service",
+    "safety-service": "safety_service",
 }
 
 # Add services dir for shared/ imports

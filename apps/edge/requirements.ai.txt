@@ -1,0 +1,14 @@
+# MOSY Edge AI Services — Python Dependencies
+# All services: OCR, Vision (Moondream 2), Safety (MediaPipe PERCLOS)
+# Target: ARM64 Linux (Mac mini M1 Docker), CPU-only inference
+opencv-python-headless==4.10.0.84
+numpy>=1.24.0,<2.0.0
+Pillow>=10.0.0
+scipy>=1.13.0
+# PaddleOCR for dashboard display reading
+paddlepaddle==3.0.0
+paddleocr==3.0.0
+# Moondream 2 VLM for boom camera analysis
+moondream==0.2.0
+# MediaPipe for face mesh / PERCLOS fatigue detection
+mediapipe==0.10.18

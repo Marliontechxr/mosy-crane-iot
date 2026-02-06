@@ -1,18 +1,27 @@
 # =============================================================================
-# MOSY — Base Docker Image for Edge Services (x86 POC)
-# Python 3.11 with common dependencies for all services.
+# MOSY — AI Docker Image for Edge AI Services (x86/ARM64 POC)
+# Extends base pattern with OpenCV, PaddleOCR, Moondream 2, MediaPipe.
 # =============================================================================
 FROM python:3.11-slim AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libsqlite3-dev \
+    libglib2.0-0 \
+    libgomp1 \
+    libopenblas-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+# Install base dependencies first (better caching)
 COPY apps/edge/requirements.base.txt /tmp/requirements.base.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.base.txt && rm /tmp/requirements.base.txt
+
+# Install AI dependencies
+COPY apps/edge/requirements.ai.txt /tmp/requirements.ai.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.ai.txt && rm /tmp/requirements.ai.txt
 
 # Install mosy-schemas from workspace
 COPY packages/mqtt-schemas/python /tmp/mosy-schemas
@@ -21,8 +30,11 @@ RUN pip install --no-cache-dir /tmp/mosy-schemas && rm -rf /tmp/mosy-schemas
 # Copy shared utilities
 COPY apps/edge/services/shared /app/shared
 
-# Create data directory for SQLite before switching to non-root
-RUN mkdir -p /app/data
+# Create directories for data, models, and calibrations
+RUN mkdir -p /app/data /app/models /app/calibrations
+
+# Copy calibration profiles
+COPY apps/edge/config/calibrations /app/calibrations
 
 # Copy service code into image (build args set in docker-compose)
 ARG SERVICE_SRC

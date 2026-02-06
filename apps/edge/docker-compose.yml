@@ -1,6 +1,7 @@
 # =============================================================================
 # MOSY — Edge Platform Docker Compose (x86 POC)
-# Phase 3: Core services only. OCR/vision/safety added in Phase 4.
+# Phase 3 core + Phase 4 AI services (OCR, Vision, Safety).
+# Service code is COPY'd into images via build args (no bind mounts).
 # =============================================================================
 
 services:
@@ -34,10 +35,11 @@ services:
     build:
       context: ../../
       dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: fusion-service
+        SERVICE_MODULE: fusion_service
     container_name: mosy-fusion-service
     command: ["python", "-m", "fusion_service.main"]
-    volumes:
-      - ./services/fusion-service:/app/fusion_service:ro
     environment:
       MQTT_BROKER: mosquitto
       MQTT_PORT: "1883"
@@ -67,10 +69,11 @@ services:
     build:
       context: ../../
       dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: state-engine
+        SERVICE_MODULE: state_engine
     container_name: mosy-state-engine
     command: ["python", "-m", "state_engine.main"]
-    volumes:
-      - ./services/state-engine:/app/state_engine:ro
     environment:
       MQTT_BROKER: mosquitto
       MQTT_PORT: "1883"
@@ -100,10 +103,12 @@ services:
     build:
       context: ../../
       dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: mqtt-bridge
+        SERVICE_MODULE: mqtt_bridge
     container_name: mosy-mqtt-bridge
     command: ["python", "-m", "mqtt_bridge.main"]
     volumes:
-      - ./services/mqtt-bridge:/app/mqtt_bridge:ro
       - sqlite-data:/app/data
     environment:
       MQTT_BROKER: mosquitto
@@ -138,10 +143,12 @@ services:
     build:
       context: ../../
       dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: iot-agent
+        SERVICE_MODULE: iot_agent
     container_name: mosy-iot-agent
     command: ["python", "-m", "iot_agent.main"]
     volumes:
-      - ./services/iot-agent:/app/iot_agent:ro
       - sqlite-data:/app/data
     environment:
       MQTT_BROKER: mosquitto
@@ -166,6 +173,122 @@ services:
       timeout: 10s
       retries: 3
 
+  # ---------------------------------------------------------------------------
+  # OCR Service — PaddleOCR dashboard display reader
+  # ---------------------------------------------------------------------------
+  ocr-service:
+    build:
+      context: ../../
+      dockerfile: apps/edge/Dockerfile.ai
+      args:
+        SERVICE_SRC: ocr-service
+        SERVICE_MODULE: ocr_service
+    container_name: mosy-ocr-service
+    command: ["python", "-m", "ocr_service.main"]
+    volumes:
+      - model-cache:/home/mosy/.paddleocr
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CRANE_ID: ${CRANE_ID:-POC-001}
+      CAMERA_SOURCE: ${OCR_CAMERA_SOURCE:-none}
+      OCR_FPS: ${OCR_FPS:-5}
+      CALIBRATION_PATH: /app/calibrations/poc-crane.json
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - mosy-edge-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import socket; s=socket.socket(); s.connect((\"localhost\",8084)); s.close()' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Vision Service — Moondream 2 VLM boom camera analyzer
+  # ---------------------------------------------------------------------------
+  vision-service:
+    build:
+      context: ../../
+      dockerfile: apps/edge/Dockerfile.ai
+      args:
+        SERVICE_SRC: vision-service
+        SERVICE_MODULE: vision_service
+    container_name: mosy-vision-service
+    command: ["python", "-m", "vision_service.main"]
+    volumes:
+      - model-cache:/home/mosy/.cache
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CRANE_ID: ${CRANE_ID:-POC-001}
+      CAMERA_SOURCE: ${BOOM_CAMERA_SOURCE:-none}
+      INFERENCE_FPS: ${VISION_FPS:-0.2}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - mosy-edge-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import socket; s=socket.socket(); s.connect((\"localhost\",8087)); s.close()' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # Safety Service — MediaPipe PERCLOS fatigue detection
+  # ---------------------------------------------------------------------------
+  safety-service:
+    build:
+      context: ../../
+      dockerfile: apps/edge/Dockerfile.ai
+      args:
+        SERVICE_SRC: safety-service
+        SERVICE_MODULE: safety_service
+    container_name: mosy-safety-service
+    command: ["python", "-m", "safety_service.main"]
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CRANE_ID: ${CRANE_ID:-POC-001}
+      CAMERA_SOURCE: ${CABIN_CAMERA_SOURCE:-none}
+      INFERENCE_FPS: ${SAFETY_FPS:-10}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - mosy-edge-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import socket; s=socket.socket(); s.connect((\"localhost\",8088)); s.close()' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
 networks:
   mosy-edge-net:
     driver: bridge
@@ -174,3 +297,4 @@ volumes:
   mosquitto-data:
   mosquitto-logs:
   sqlite-data:
+  model-cache:

@@ -1,0 +1,76 @@
+{
+  "calibration_id": "poc-crane-default-v1",
+  "crane_id": "POC-001",
+  "crane_model": "Liebherr LTM 1025-3.1",
+  "rated_capacity_tonnes": 25.0,
+  "last_calibrated": "2026-02-01T00:00:00Z",
+  "approved_by": "calibration-technician",
+  "gauges": {
+    "load": {
+      "type": "digital",
+      "roi": { "x": 0.05, "y": 0.1, "width": 0.25, "height": 0.15 },
+      "scale_min": 0.0,
+      "scale_max": 50.0,
+      "unit": "tonnes",
+      "decimal_places": 1,
+      "ocr_engine": "paddleocr",
+      "char_whitelist": "0123456789."
+    },
+    "boom_angle": {
+      "type": "digital",
+      "roi": { "x": 0.35, "y": 0.1, "width": 0.25, "height": 0.15 },
+      "scale_min": 0.0,
+      "scale_max": 85.0,
+      "unit": "degrees",
+      "decimal_places": 1,
+      "ocr_engine": "paddleocr",
+      "char_whitelist": "0123456789."
+    },
+    "radius": {
+      "type": "digital",
+      "roi": { "x": 0.65, "y": 0.1, "width": 0.25, "height": 0.15 },
+      "scale_min": 0.0,
+      "scale_max": 40.0,
+      "unit": "m",
+      "decimal_places": 1,
+      "ocr_engine": "paddleocr",
+      "char_whitelist": "0123456789."
+    },
+    "height": {
+      "type": "digital",
+      "roi": { "x": 0.05, "y": 0.35, "width": 0.25, "height": 0.15 },
+      "scale_min": 0.0,
+      "scale_max": 30.0,
+      "unit": "m",
+      "decimal_places": 1,
+      "ocr_engine": "paddleocr",
+      "char_whitelist": "0123456789."
+    },
+    "rated_capacity_indicator": {
+      "type": "analog",
+      "roi": { "x": 0.35, "y": 0.35, "width": 0.3, "height": 0.3 },
+      "scale_min": 0.0,
+      "scale_max": 100.0,
+      "unit": "percent",
+      "decimal_places": 0,
+      "ocr_engine": "paddleocr",
+      "needle_color_hsv_low": [0, 100, 100],
+      "needle_color_hsv_high": [10, 255, 255],
+      "gauge_center": { "x": 0.5, "y": 0.5 },
+      "start_angle_degrees": 225,
+      "end_angle_degrees": -45
+    }
+  },
+  "sensor_offsets": {
+    "lidar_offset_mm": 0.0,
+    "imu_gyro_bias_x": 0.0,
+    "imu_gyro_bias_y": 0.0,
+    "imu_gyro_bias_z": 0.0
+  },
+  "safety_limits": {
+    "max_load_tonnes": 25.0,
+    "max_boom_angle_degrees": 80.0,
+    "max_wind_kmh": 72.0,
+    "min_visibility_percent": 30.0
+  }
+}
