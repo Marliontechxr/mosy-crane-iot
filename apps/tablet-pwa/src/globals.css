@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mosy-bg: #0A0F1C;
+  --color-mosy-surface: #111827;
+  --color-mosy-border: #1e293b;
+  --color-mosy-primary: #3b82f6;
+  --color-mosy-green: #22c55e;
+  --color-mosy-amber: #f59e0b;
+  --color-mosy-red: #dc2626;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background-color: #0A0F1C;
+  color: white;
+  font-family: system-ui, -apple-system, sans-serif;
+}

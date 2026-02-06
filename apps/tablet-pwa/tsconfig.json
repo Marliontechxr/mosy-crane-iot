@@ -1,19 +1,22 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "jsx": "preserve",
-    "module": "ESNext",
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "esnext",
     "moduleResolution": "bundler",
-    "allowJs": true,
+    "jsx": "react-jsx",
+    "strict": true,
     "noEmit": true,
-    "incremental": true,
-    "plugins": [{ "name": "next" }],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "paths": {
       "@/*": ["./src/*"],
       "@mosy/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@mosy/mqtt-schemas": ["../../packages/mqtt-schemas/src/index.ts"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite-env.d.ts"],
   "exclude": ["node_modules"]
 }
