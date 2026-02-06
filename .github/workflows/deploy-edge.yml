@@ -1,0 +1,77 @@
+name: Deploy — Edge Services to Jetson
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag (commit SHA or 'latest')"
+        required: true
+        default: "latest"
+      target_host:
+        description: "Jetson hostname or IP"
+        required: true
+        default: "192.168.4.1"
+
+concurrency:
+  group: deploy-edge
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Edge Services
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR credentials
+        id: acr
+        run: |
+          ACR_PASSWORD=$(az acr credential show -n mosycr --query "passwords[0].value" -o tsv)
+          echo "::add-mask::${ACR_PASSWORD}"
+          echo "password=${ACR_PASSWORD}" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ inputs.target_host }}
+          username: ${{ secrets.JETSON_SSH_USER }}
+          key: ${{ secrets.JETSON_SSH_KEY }}
+          script: |
+            # Login to ACR
+            docker login mosycr.azurecr.io -u ${{ secrets.ACR_USERNAME }} -p ${{ steps.acr.outputs.password }}
+
+            # Pull latest images
+            TAG=${{ inputs.image_tag }}
+            for SERVICE in fusion-service state-engine mqtt-bridge iot-agent ocr-service vision-service safety-service; do
+              docker pull mosycr.azurecr.io/mosy-${SERVICE}:${TAG}
+            done
+
+            # Update docker compose
+            cd /opt/mosy/edge
+            IMAGE_TAG=${TAG} docker compose up -d --remove-orphans
+
+            # Verify health
+            sleep 30
+            docker compose ps --format "table {{.Name}}\t{{.Status}}"
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ inputs.target_host }}
+          username: ${{ secrets.JETSON_SSH_USER }}
+          key: ${{ secrets.JETSON_SSH_KEY }}
+          script: |
+            # Check all services are healthy
+            UNHEALTHY=$(docker ps --filter health=unhealthy --format '{{.Names}}')
+            if [ -n "$UNHEALTHY" ]; then
+              echo "UNHEALTHY services: $UNHEALTHY"
+              exit 1
+            fi
+            echo "All edge services healthy"

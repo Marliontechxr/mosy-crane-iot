@@ -1,4 +1,4 @@
-name: CI — Lint & Typecheck
+name: CI — Lint, Test & Build
 
 on:
   pull_request:
@@ -11,8 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-and-typecheck:
-    name: Lint & Typecheck
+  # ─── TypeScript: Lint, Typecheck, Test ───────────────────────────────
+  typescript:
+    name: TypeScript — Lint, Test & Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,3 +41,69 @@ jobs:
 
       - name: Typecheck
         run: pnpm turbo run typecheck
+
+      - name: Test — Admin Dashboard
+        run: pnpm --filter @mosy/admin-dashboard test
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Test — Tablet PWA
+        run: pnpm --filter @mosy/tablet-pwa test
+
+      - name: Test — Azure Functions
+        run: pnpm --filter @mosy/functions test
+
+      - name: Build — Tablet PWA
+        run: pnpm --filter @mosy/tablet-pwa build
+
+  # ─── Python: Lint, Test (Edge Services) ──────────────────────────────
+  python-edge:
+    name: Python — Edge Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install edge test dependencies
+        run: |
+          pip install -r apps/edge/requirements.base.txt
+          pip install -r apps/edge/requirements.test.txt
+
+      - name: Lint — Ruff
+        run: |
+          pip install ruff
+          ruff check apps/edge/services/ --ignore E501
+
+      - name: Test — Edge Services
+        run: |
+          cd apps/edge
+          python -m pytest tests/ -v --tb=short
+        env:
+          PYTHONPATH: services
+
+  # ─── Python: Firmware Tests (RPi 5 cabin) ────────────────────────────
+  python-firmware:
+    name: Python — Firmware Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install firmware test dependencies
+        run: |
+          pip install pytest paho-mqtt pyyaml pynmea2
+
+      - name: Test — RPi 5 Cabin Hub
+        run: |
+          cd firmware/rpi5-cabin
+          python -m pytest tests/ -v --tb=short

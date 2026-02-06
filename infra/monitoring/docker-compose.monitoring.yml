@@ -1,0 +1,83 @@
+# =============================================================================
+# MOSY — Monitoring Stack (Prometheus + Grafana + Exporters)
+#
+# Usage:
+#   docker compose -f infra/monitoring/docker-compose.monitoring.yml up -d
+#
+# Access:
+#   Prometheus: http://localhost:9090
+#   Grafana:    http://localhost:3001 (admin/mosy-grafana-dev)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Prometheus — metrics collection and alerting
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: mosy-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alert-rules.yml:/etc/prometheus/rules/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - mosy-monitoring
+      - mosy-edge-net
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Grafana — dashboards and visualization
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: mosy-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-mosy-grafana-dev}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "http://localhost:3001"
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - mosy-monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Mosquitto Exporter — MQTT broker metrics for Prometheus
+  # ---------------------------------------------------------------------------
+  mosquitto-exporter:
+    image: sapcc/mosquitto-exporter:0.8.0
+    container_name: mosy-mosquitto-exporter
+    environment:
+      BROKER_ENDPOINT: tcp://mosquitto:1883
+    networks:
+      - mosy-monitoring
+      - mosy-edge-net
+    restart: unless-stopped
+
+networks:
+  mosy-monitoring:
+    driver: bridge
+  mosy-edge-net:
+    external: true
+    name: mosy-crane-iot_mosy-edge-net
+
+volumes:
+  prometheus-data:
+  grafana-data:

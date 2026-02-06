@@ -1,0 +1,155 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Edge Service Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "up{job=\"edge-services\"}",
+          "legendFormat": "{{ instance }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 1, "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "MQTT Messages Published (rate/min)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(mosquitto_messages_published_total[5m]) * 60",
+          "legendFormat": "published/min"
+        }
+      ]
+    },
+    {
+      "title": "MQTT Messages Received (rate/min)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(mosquitto_messages_received_total[5m]) * 60",
+          "legendFormat": "received/min"
+        }
+      ]
+    },
+    {
+      "title": "MQTT Connected Clients",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "mosquitto_clients_connected",
+          "legendFormat": "clients"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 20,
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 5, "color": "yellow" },
+              { "value": 7, "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "MQTT Stored Messages",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "targets": [
+        {
+          "expr": "mosquitto_messages_stored",
+          "legendFormat": "stored"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 10000,
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 3000, "color": "yellow" },
+              { "value": 5000, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "MQTT Bytes Sent (rate/min)",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "rate(mosquitto_bytes_sent_total[5m]) * 60",
+          "legendFormat": "bytes/min sent"
+        },
+        {
+          "expr": "rate(mosquitto_bytes_received_total[5m]) * 60",
+          "legendFormat": "bytes/min received"
+        }
+      ]
+    },
+    {
+      "title": "Bridge Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 18 },
+      "targets": [
+        {
+          "expr": "mosquitto_messages_stored",
+          "legendFormat": "queued messages"
+        }
+      ]
+    },
+    {
+      "title": "Service Uptime",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 18 },
+      "targets": [
+        {
+          "expr": "time() - process_start_time_seconds{job=\"edge-services\"}",
+          "legendFormat": "{{ instance }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["mosy", "edge", "mqtt"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "MOSY — Edge Health",
+  "uid": "mosy-edge-health",
+  "version": 1
+}

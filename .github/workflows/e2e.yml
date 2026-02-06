@@ -1,0 +1,71 @@
+name: E2E — Integration Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: "0 2 * * *"
+
+concurrency:
+  group: e2e-tests
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: E2E Data Flow Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: pip install -r tests/e2e/requirements.txt
+
+      - name: Start edge services
+        run: |
+          cd apps/edge
+          docker compose up -d mosquitto fusion-service state-engine mqtt-bridge
+          echo "Waiting 30s for services to start..."
+          sleep 30
+
+      - name: Verify services healthy
+        run: |
+          docker ps --format "table {{.Names}}\t{{.Status}}"
+          # Check MQTT broker
+          docker exec mosy-mosquitto mosquitto_sub -h localhost -t '$SYS/broker/uptime' -C 1 -W 10
+
+      - name: Run E2E tests
+        run: |
+          cd tests/e2e
+          python -m pytest test_data_flow.py -v --timeout=120 -k "not (FusionServiceFlow or StateEngineFlow or AlertEscalation)"
+        env:
+          MQTT_BROKER: localhost
+          MQTT_PORT: "1883"
+          CRANE_ID: POC-001
+
+      - name: Run integration tests (with services)
+        run: |
+          cd tests/e2e
+          python -m pytest test_data_flow.py -v --timeout=120
+        env:
+          MQTT_BROKER: localhost
+          MQTT_PORT: "1883"
+          CRANE_ID: POC-001
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          docker compose -f apps/edge/docker-compose.yml logs --tail=100
+          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          cd apps/edge
+          docker compose down --remove-orphans -v

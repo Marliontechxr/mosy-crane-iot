@@ -1,0 +1,96 @@
+# =============================================================================
+# MOSY — E2E Test Docker Compose
+# Spins up minimal edge services for integration testing.
+# AI services excluded (heavy models, not needed for data-flow tests).
+#
+# Usage:
+#   docker compose -f tests/e2e/docker-compose.e2e.yml up -d
+#   pytest tests/e2e/ -v --timeout=120
+#   docker compose -f tests/e2e/docker-compose.e2e.yml down -v
+# =============================================================================
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    container_name: mosy-e2e-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ../../apps/edge/config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      - mosy-e2e-net
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/broker/uptime' -C 1 -W 3 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 3s
+
+  fusion-service:
+    build:
+      context: ../../
+      dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: fusion-service
+        SERVICE_MODULE: fusion_service
+    container_name: mosy-e2e-fusion
+    command: ["python", "-m", "fusion_service.main"]
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CRANE_ID: POC-001
+      LOG_LEVEL: DEBUG
+    networks:
+      - mosy-e2e-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+  state-engine:
+    build:
+      context: ../../
+      dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: state-engine
+        SERVICE_MODULE: state_engine
+    container_name: mosy-e2e-state-engine
+    command: ["python", "-m", "state_engine.main"]
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CRANE_ID: POC-001
+      LOG_LEVEL: DEBUG
+    networks:
+      - mosy-e2e-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+  mqtt-bridge:
+    build:
+      context: ../../
+      dockerfile: apps/edge/Dockerfile.base
+      args:
+        SERVICE_SRC: mqtt-bridge
+        SERVICE_MODULE: mqtt_bridge
+    container_name: mosy-e2e-mqtt-bridge
+    command: ["python", "-m", "mqtt_bridge.main"]
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CRANE_ID: POC-001
+      IOT_HUB_CONNECTION_STRING: ""
+      SQLITE_DB_PATH: /app/data/bridge.db
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8081:8081"
+    networks:
+      - mosy-e2e-net
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+networks:
+  mosy-e2e-net:
+    driver: bridge

@@ -1,0 +1,62 @@
+name: Deploy — Admin Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/admin-dashboard/**"
+      - "packages/**"
+      - ".github/workflows/deploy-dashboard.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dashboard
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy Admin Dashboard
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm turbo run build --filter=@mosy/shared-types --filter=@mosy/mqtt-schemas
+
+      - name: Test dashboard
+        run: pnpm --filter @mosy/admin-dashboard test
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Build dashboard
+        run: pnpm --filter @mosy/admin-dashboard build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.API_URL || 'https://mosy-functions-dev.azurewebsites.net/api' }}
+          NEXT_PUBLIC_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_AD_CLIENT_ID || '' }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: mosy-dashboard-dev
+          package: apps/admin-dashboard/.next

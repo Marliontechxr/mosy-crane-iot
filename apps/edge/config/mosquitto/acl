@@ -1,0 +1,63 @@
+# =============================================================================
+# MOSY — Mosquitto ACL (Access Control List)
+# Controls per-user topic access for edge MQTT broker.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Edge services — read/write on mosy/# topics
+# ---------------------------------------------------------------------------
+user mosy-fusion
+topic readwrite mosy/#
+
+user mosy-state-engine
+topic readwrite mosy/#
+
+user mosy-ocr
+topic readwrite mosy/#
+
+user mosy-vision
+topic readwrite mosy/#
+
+user mosy-safety
+topic readwrite mosy/#
+
+user mosy-bridge
+topic readwrite mosy/#
+
+user mosy-iot-agent
+topic readwrite mosy/#
+
+# ---------------------------------------------------------------------------
+# Firmware devices — write to telemetry, read commands
+# ---------------------------------------------------------------------------
+user mosy-boom
+topic write mosy/+/telemetry/boom
+topic read mosy/+/commands/#
+
+user mosy-cabin
+topic write mosy/+/telemetry/cabin
+topic write mosy/+/vision/cabin
+topic read mosy/+/commands/#
+
+# ---------------------------------------------------------------------------
+# Tablet PWA — read telemetry and alerts, write acks
+# ---------------------------------------------------------------------------
+user mosy-tablet
+topic read mosy/+/telemetry/fused
+topic read mosy/+/alerts/#
+topic read mosy/+/state/#
+topic write mosy/+/operator/ack
+
+# ---------------------------------------------------------------------------
+# Admin / monitoring — read everything
+# ---------------------------------------------------------------------------
+user mosy-admin
+topic read mosy/#
+topic read $SYS/#
+
+# ---------------------------------------------------------------------------
+# E2E test runner
+# ---------------------------------------------------------------------------
+user mosy-e2e
+topic readwrite mosy/#
+topic readwrite mosy/e2e-test/#

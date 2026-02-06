@@ -1,0 +1,73 @@
+# =============================================================================
+# MOSY — Prometheus Alert Rules
+# =============================================================================
+
+groups:
+  - name: mosy-edge-alerts
+    interval: 30s
+    rules:
+      # Service health
+      - alert: EdgeServiceDown
+        expr: up{job="edge-services"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Edge service {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} has been unreachable for 2+ minutes."
+
+      - alert: MQTTBridgeDown
+        expr: up{job="mqtt-bridge"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MQTT Bridge is down — cloud sync interrupted"
+          description: "The MQTT-to-IoT-Hub bridge is offline. Telemetry will queue locally."
+
+      # MQTT broker
+      - alert: MosquittoDown
+        expr: up{job="mosquitto"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Mosquitto MQTT broker is down"
+          description: "All edge service communication depends on MQTT. Immediate attention required."
+
+      - alert: MQTTMessageQueueHigh
+        expr: mosquitto_messages_stored > 5000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MQTT stored messages exceeding 5000"
+          description: "Messages are queuing — possible consumer backlog."
+
+      # Resource usage (requires node-exporter or cAdvisor)
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Host memory is at {{ $value | humanizePercentage }}."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 90%"
+          description: "Host CPU is at {{ $value }}%."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space below 10%"
+          description: "Root filesystem has {{ $value | humanizePercentage }} free."
