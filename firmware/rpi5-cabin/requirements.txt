@@ -1,0 +1,11 @@
+# MOSY RPi 5 Cabin Hub — Python dependencies
+# Blueprint Section 8 — exact pinned versions
+
+paho-mqtt==2.1.0
+pyserial==3.5
+pynmea2==1.19.0
+RPi.GPIO==0.7.0
+adafruit-circuitpython-hx711==1.4.9
+opencv-python-headless==4.11.0.86
+pyyaml==6.0.2
+setproctitle==1.3.3

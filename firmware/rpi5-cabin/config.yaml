@@ -1,0 +1,47 @@
+# MOSY RPi 5 Cabin Hub — Configuration
+# Blueprint Section 8
+
+device:
+  id: "cabin-hub-001"
+  crane_id: "CRANE-001"
+
+mqtt:
+  broker: "192.168.4.1"
+  port: 1883
+  topic_cabin: "mosy/{crane_id}/telemetry/cabin"
+  keepalive: 60
+  reconnect_delay: 5
+
+camera:
+  usb_device: "/dev/video0"
+  resolution: [1280, 720]
+  fps: 5
+  jpeg_quality: 85
+  rtsp_forward_url: "rtsp://192.168.4.1:8554/cabin"
+
+sensors:
+  imu:
+    enabled: true
+    i2c_address: 0x29
+    sampling_rate_hz: 10
+
+  gps:
+    enabled: true
+    uart_port: "/dev/ttyAMA0"
+    baud_rate: 9600
+
+  vibration:
+    enabled: true
+    gpio_pin: 17
+    debounce_ms: 20
+
+  joystick_pressure:
+    enabled: true
+    dout_pin: 27
+    sck_pin: 22
+    calibration_factor: 430.0
+    tare_weight: 0
+
+logging:
+  level: INFO
+  file: /var/log/mosy-cabin.log
