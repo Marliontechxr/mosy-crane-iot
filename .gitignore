@@ -8,6 +8,17 @@ dist/
 out/
 build/
 *.tsbuildinfo
+# TypeScript composite build artifacts in src/
+packages/*/src/*.js
+packages/*/src/*.js.map
+packages/*/src/*.d.ts
+packages/*/src/*.d.ts.map
+
+# Azure Functions deploy staging
+functions/.deploy/
+
+# Compiled ARM templates
+infra/bicep/main.json
 
 # Turbo
 .turbo/
