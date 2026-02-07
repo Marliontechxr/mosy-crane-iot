@@ -205,4 +205,4 @@ For complete system specification including MQTT topics, database schemas, API c
 
 ## License
 
-UNLICENSED — Proprietary software. All rights reserved by Balanetra Technologies.
+UNLICENSED — Proprietary software. All rights reserved by Department of Information Technology, Thiagarajar College of Engineering.
