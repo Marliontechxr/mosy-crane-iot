@@ -18,12 +18,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatTimestamp } from '@/lib/utils';
-import type { OperatorListItem, ShiftSummary } from '@mosy/shared-types';
+import type { OperatorListItem, OperatorDetailResponse, ShiftSummary } from '@mosy/shared-types';
 
 export default function OperatorDetailPage() {
   const params = useParams<{ operatorId: string }>();
   const { getAccessToken } = useAuth();
   const [operator, setOperator] = useState<OperatorListItem | null>(null);
+  const [operatorDetail, setOperatorDetail] = useState<OperatorDetailResponse | null>(null);
   const [shifts, setShifts] = useState<ShiftSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,8 +32,11 @@ export default function OperatorDetailPage() {
     const load = async () => {
       try {
         const token = await getAccessToken();
-        const [opRes, shiftRes] = await Promise.all([
+        const [opRes, detailRes, shiftRes] = await Promise.all([
           fetch(`/api/operators`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`/api/operators/${params.operatorId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
           fetch(`/api/operators/${params.operatorId}/shifts`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -40,6 +44,9 @@ export default function OperatorDetailPage() {
         if (opRes.ok) {
           const ops: OperatorListItem[] = await opRes.json();
           setOperator(ops.find((o) => o.id === params.operatorId) ?? null);
+        }
+        if (detailRes.ok) {
+          setOperatorDetail(await detailRes.json());
         }
         if (shiftRes.ok) {
           setShifts(await shiftRes.json());
@@ -80,6 +87,23 @@ export default function OperatorDetailPage() {
               </Badge>
               {operator.certifications.mobile_crane && (
                 <Badge variant="default">Mobile Crane Certified</Badge>
+              )}
+              {operatorDetail && (
+                <Badge
+                  variant={
+                    operatorDetail.enrollment_status === 'enrolled'
+                      ? 'success'
+                      : operatorDetail.enrollment_status === 'pending'
+                        ? 'warning'
+                        : 'outline'
+                  }
+                >
+                  {operatorDetail.enrollment_status === 'enrolled'
+                    ? 'Face Enrolled'
+                    : operatorDetail.enrollment_status === 'pending'
+                      ? 'Enrollment Pending'
+                      : 'Not Enrolled'}
+                </Badge>
               )}
             </div>
           </div>

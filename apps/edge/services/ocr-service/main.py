@@ -50,6 +50,10 @@ CALIBRATION_PATH = os.environ.get(
 # MQTT topics
 TOPIC_OCR = f"mosy/{CRANE_ID}/telemetry/ocr"
 TOPIC_CALIBRATION = f"mosy/{CRANE_ID}/config/calibration"
+TOPIC_ALERT_WARNING = f"mosy/{CRANE_ID}/alerts/warning"
+
+# Dashboard display off: raw brightness (0-255) below this threshold
+_DISPLAY_OFF_BRIGHTNESS_THRESHOLD = 15.0
 
 _running = True
 _calibration_lock = threading.Lock()
@@ -155,6 +159,18 @@ def _read_gauge(
 
 
 # ---------------------------------------------------------------------------
+# Alert publishing helper
+# ---------------------------------------------------------------------------
+def _publish_alert(client: mqtt.Client, alert: dict) -> None:
+    """Publish an alert message to the warning alerts topic."""
+    try:
+        client.publish(TOPIC_ALERT_WARNING, json.dumps(alert), qos=1)
+        log.info("alert_published", alert_id=alert.get("alert_id"), type=alert.get("type"))
+    except Exception:
+        log.exception("alert_publish_failed")
+
+
+# ---------------------------------------------------------------------------
 # MQTT callbacks (calibration updates)
 # ---------------------------------------------------------------------------
 def on_connect(
@@ -219,6 +235,25 @@ def ocr_loop(client: mqtt.Client, camera: CameraCapture) -> None:
             contrast = float(np.std(gray))
             laplacian = cv2.Laplacian(gray, cv2.CV_64F)
             blur_score = float(np.var(laplacian))
+
+            # Dashboard display off detection: near-black frame
+            if brightness < _DISPLAY_OFF_BRIGHTNESS_THRESHOLD:
+                _publish_alert(client, {
+                    "timestamp": time.time(),
+                    "crane_id": CRANE_ID,
+                    "alert_id": f"DOF-{int(time.time())}",
+                    "level": "warning",
+                    "type": "dashboard_display_off",
+                    "title": "Dashboard display appears to be off",
+                    "description": (
+                        "Camera reading very low brightness. "
+                        "Dashboard display may be turned off or camera obstructed."
+                    ),
+                    "source": "ocr",
+                    "values": {"brightness": round(brightness, 2)},
+                    "acknowledgement_required": True,
+                    "auto_recovery": True,
+                })
 
             payload = {
                 "timestamp": time.time(),

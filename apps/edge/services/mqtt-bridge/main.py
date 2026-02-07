@@ -46,6 +46,10 @@ _iot_client: Optional[object] = None  # Azure IoT Device Client
 _iot_connected = False
 _local_client: Optional[mqtt.Client] = None
 
+# Prolonged disconnect tracking
+_disconnect_since: Optional[float] = None
+_DISCONNECT_ALERT_THRESHOLD_S: float = 300.0  # 5 minutes
+
 
 # ---------------------------------------------------------------------------
 # Azure IoT Hub client
@@ -78,7 +82,7 @@ def _init_iot_hub() -> Optional[object]:
 
 def _send_to_iot_hub(topic: str, payload: dict) -> bool:
     """Send a message to Azure IoT Hub. Returns True if successful."""
-    global _iot_connected
+    global _iot_connected, _disconnect_since
 
     if _iot_client is None:
         return False
@@ -93,10 +97,45 @@ def _send_to_iot_hub(topic: str, payload: dict) -> bool:
         msg.custom_properties["crane_id"] = CRANE_ID
 
         _iot_client.send_message(msg)  # type: ignore[union-attr]
+
+        # Reconnection detected — check for prolonged disconnect
+        if not _iot_connected and _disconnect_since is not None:
+            duration = time.time() - _disconnect_since
+            if duration > _DISCONNECT_ALERT_THRESHOLD_S and _local_client is not None:
+                alert = {
+                    "timestamp": time.time(),
+                    "crane_id": CRANE_ID,
+                    "alert_id": f"DC-{int(time.time())}",
+                    "level": "warning",
+                    "type": "prolonged_disconnect",
+                    "title": f"Cloud connection restored after {duration / 60:.1f} min",
+                    "description": (
+                        f"Azure IoT Hub was unreachable for "
+                        f"{duration / 60:.1f} minutes."
+                    ),
+                    "source": "system",
+                    "values": {"disconnect_duration_s": round(duration, 1)},
+                    "acknowledgement_required": False,
+                    "auto_recovery": True,
+                }
+                _local_client.publish(
+                    f"mosy/{CRANE_ID}/alerts/warning",
+                    json.dumps(alert),
+                    qos=1,
+                )
+                log.info(
+                    "prolonged_disconnect_alert",
+                    duration_s=round(duration, 1),
+                )
+            _disconnect_since = None
+
         _iot_connected = True
         return True
     except Exception as exc:
         log.warning("iot_hub_send_failed", error=str(exc))
+        if _iot_connected and _disconnect_since is None:
+            _disconnect_since = time.time()
+            log.info("disconnect_tracking_started")
         _iot_connected = False
         return False
 

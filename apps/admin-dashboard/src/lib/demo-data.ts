@@ -14,6 +14,15 @@ import type {
   TelemetryHistoryResponse,
   TelemetryPoint,
   AcknowledgeResponse,
+  CraneListItem,
+  OperatorDetailResponse,
+  CalibrationProfileResponse,
+  ShiftReportListItem,
+  SafetyComplianceResponse,
+  ProductivityReportResponse,
+  CraneDiagnosticsResponse,
+  SiteListItem,
+  EnrollmentResponse,
 } from '@mosy/shared-types';
 
 /** Check if demo mode is enabled. */
@@ -313,4 +322,246 @@ export function getDemoTelemetry(craneId: string, limit: number = 60): Telemetry
 /** Demo acknowledge response. */
 export function getDemoAcknowledge(): AcknowledgeResponse {
   return { success: true, acknowledged_at: Date.now() };
+}
+
+// =============================================================================
+// Control-Plane Demo Data
+// =============================================================================
+
+/** Demo crane list for Settings → Cranes tab. */
+export function getDemoCraneList(): CraneListItem[] {
+  const now = Date.now();
+  return [
+    {
+      id: 'DEMO-001', name: 'Liebherr LTM 1300', crane_type: 'mobile', model: 'LTM 1300-6.3',
+      serial_number: 'LTM-2024-00147', max_load_tonnes: 50, boom_length_m: 60,
+      site_name: 'Chennai Port Construction', status: 'active', last_calibration: now - 86400000 * 3,
+    },
+    {
+      id: 'DEMO-002', name: 'Tadano GR-800XL', crane_type: 'mobile', model: 'GR-800XL-4',
+      serial_number: 'TAD-2023-00892', max_load_tonnes: 80, boom_length_m: 47,
+      site_name: 'Chennai Port Construction', status: 'maintenance', last_calibration: now - 86400000 * 10,
+    },
+    {
+      id: 'DEMO-003', name: 'XCMG QY70K-I', crane_type: 'mobile', model: 'QY70K-I',
+      serial_number: 'XCMG-2024-01203', max_load_tonnes: 70, boom_length_m: 44,
+      site_name: 'Bangalore Highway Bridge', status: 'active', last_calibration: now - 86400000 * 5,
+    },
+  ];
+}
+
+/** Demo operator detail with enrollment status. */
+export function getDemoOperatorDetail(id: string): OperatorDetailResponse {
+  const now = Date.now();
+  const operators: Record<string, OperatorDetailResponse> = {
+    'OP-001': {
+      id: 'OP-001', name: 'Rajesh Kumar', email: 'rajesh.kumar@balanetra.com',
+      phone: '+91-9876543210', employee_id: 'EMP-001', department: 'Operations',
+      certifications: { mobile_crane: true, tower_crane: false, overhead_crane: false, expires: now + 86400000 * 180 },
+      performance_metrics: { total_lifts: 1247, safety_score: 96 }, status: 'active',
+      enrollment_status: 'enrolled', hire_date: now - 86400000 * 730,
+    },
+    'OP-002': {
+      id: 'OP-002', name: 'Suresh Patel', email: 'suresh.patel@balanetra.com',
+      phone: '+91-9876543211', employee_id: 'EMP-002', department: 'Operations',
+      certifications: { mobile_crane: true, tower_crane: true, overhead_crane: false, expires: now + 86400000 * 90 },
+      performance_metrics: { total_lifts: 892, safety_score: 88 }, status: 'active',
+      enrollment_status: 'not_enrolled', hire_date: now - 86400000 * 540,
+    },
+    'OP-003': {
+      id: 'OP-003', name: 'Vikram Singh', email: 'vikram.singh@balanetra.com',
+      phone: '+91-9876543212', employee_id: 'EMP-003', department: 'Operations',
+      certifications: { mobile_crane: true, tower_crane: false, overhead_crane: true, expires: now + 86400000 * 45 },
+      performance_metrics: { total_lifts: 634, safety_score: 82 }, status: 'active',
+      enrollment_status: 'pending', hire_date: now - 86400000 * 365,
+    },
+    'OP-004': {
+      id: 'OP-004', name: 'Arun Sharma', email: 'arun.sharma@balanetra.com',
+      phone: '+91-9876543213', employee_id: 'EMP-004', department: 'Maintenance',
+      certifications: { mobile_crane: true, tower_crane: true, overhead_crane: true, expires: now + 86400000 * 200 },
+      performance_metrics: { total_lifts: 1583, safety_score: 91 }, status: 'active',
+      enrollment_status: 'enrolled', hire_date: now - 86400000 * 1095,
+    },
+    'OP-005': {
+      id: 'OP-005', name: 'Deepak Rao', email: 'deepak.rao@balanetra.com',
+      phone: '+91-9876543214', employee_id: 'EMP-005', department: 'Operations',
+      certifications: { mobile_crane: false, tower_crane: false, overhead_crane: false, expires: now - 86400000 * 15 },
+      performance_metrics: { total_lifts: 312, safety_score: 72 }, status: 'inactive',
+      enrollment_status: 'not_enrolled', hire_date: now - 86400000 * 180,
+    },
+  };
+  return operators[id] ?? operators['OP-001'];
+}
+
+/** Demo calibration profile for OCR wizard. */
+export function getDemoCalibration(craneId: string): CalibrationProfileResponse {
+  return {
+    crane_id: craneId,
+    calibration_id: `cal-${craneId}-v1`,
+    effective_from: Date.now() - 86400000 * 3,
+    version: 1,
+    gauges: {
+      load_main: {
+        type: 'digital', roi: { x: 0.05, y: 0.1, width: 0.25, height: 0.15 },
+        scale_min: 0, scale_max: 50, unit: 'tonnes', decimal_places: 1, ocr_engine: 'paddleocr-v5',
+      },
+      boom_angle: {
+        type: 'digital', roi: { x: 0.35, y: 0.1, width: 0.2, height: 0.12 },
+        scale_min: 0, scale_max: 85, unit: 'degrees', decimal_places: 1, ocr_engine: 'paddleocr-v5',
+      },
+      radius: {
+        type: 'digital', roi: { x: 0.6, y: 0.1, width: 0.2, height: 0.12 },
+        scale_min: 0, scale_max: 40, unit: 'metres', decimal_places: 1, ocr_engine: 'paddleocr-v5',
+      },
+      hook_height: {
+        type: 'digital', roi: { x: 0.05, y: 0.35, width: 0.2, height: 0.12 },
+        scale_min: 0, scale_max: 60, unit: 'metres', decimal_places: 1, ocr_engine: 'paddleocr-v5',
+      },
+      rated_capacity: {
+        type: 'analog', roi: { x: 0.65, y: 0.3, width: 0.3, height: 0.35 },
+        scale_min: 0, scale_max: 100, unit: 'percent', decimal_places: 0, ocr_engine: 'needle-detect',
+      },
+    },
+    sensor_offsets: { lidar_offset_mm: 12, imu_gyro_bias: [0.002, -0.001, 0.003] },
+    safety_limits: { max_load_tonnes: 50, max_boom_angle_degrees: 80, max_wind_kmh: 35 },
+  };
+}
+
+/** Demo shift reports for Reports → Shifts tab. */
+export function getDemoShiftReports(): ShiftReportListItem[] {
+  const now = Date.now();
+  const operators = [
+    { id: 'OP-001', name: 'Rajesh Kumar' },
+    { id: 'OP-002', name: 'Suresh Patel' },
+    { id: 'OP-003', name: 'Vikram Singh' },
+  ];
+  const cranes = [
+    { id: 'DEMO-001', name: 'Liebherr LTM 1300' },
+    { id: 'DEMO-002', name: 'Tadano GR-800XL' },
+    { id: 'DEMO-003', name: 'XCMG QY70K-I' },
+  ];
+
+  return Array.from({ length: 10 }, (_, i) => {
+    const dayOffset = (i + 1) * 86400000;
+    const op = operators[i % operators.length];
+    const cr = cranes[i % cranes.length];
+    const lifts = 8 + Math.floor(i * 1.5);
+    const score = 78 + (i % 5) * 4;
+    return {
+      id: `REPORT-${i + 1}`,
+      shift_start: now - dayOffset,
+      shift_end: now - dayOffset + 28800000,
+      duration_minutes: 480,
+      operator_name: op.name,
+      operator_id: op.id,
+      crane_name: cr.name,
+      crane_id: cr.id,
+      lifts_count: lifts,
+      total_tonnage: Math.round(lifts * 16.5 * 10) / 10,
+      performance_score: score,
+      safety_incidents: i === 3 || i === 7 ? 1 : 0,
+      pdf_url: i < 7 ? `/api/reports/shifts/REPORT-${i + 1}/pdf` : null,
+    };
+  });
+}
+
+/** Demo safety compliance metrics. */
+export function getDemoSafetyCompliance(): SafetyComplianceResponse {
+  return {
+    total_shifts: 156,
+    safe_shifts: 136,
+    compliance_percent: 87.2,
+    avg_resolution_time_minutes: 12.5,
+    alert_distribution: [
+      { level: 'info', count: 342 },
+      { level: 'warning', count: 89 },
+      { level: 'critical', count: 23 },
+    ],
+    top_alert_types: [
+      { type: 'Load threshold warning', count: 34 },
+      { type: 'Wind speed warning', count: 28 },
+      { type: 'Operator drowsiness', count: 19 },
+      { type: 'OCR confidence drop', count: 15 },
+      { type: 'Engine temperature', count: 12 },
+    ],
+  };
+}
+
+/** Demo productivity report with daily lifts. */
+export function getDemoProductivityReport(): ProductivityReportResponse {
+  const cranes = [
+    { id: 'DEMO-001', name: 'Liebherr LTM 1300' },
+    { id: 'DEMO-002', name: 'Tadano GR-800XL' },
+    { id: 'DEMO-003', name: 'XCMG QY70K-I' },
+  ];
+  const daily: ProductivityReportResponse['daily_lifts'] = [];
+  let totalLifts = 0;
+  let totalTonnage = 0;
+
+  for (let d = 6; d >= 0; d--) {
+    const date = new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+    for (const cr of cranes) {
+      const lifts = 6 + Math.floor(Math.random() * 14);
+      const tonnage = Math.round(lifts * (12 + Math.random() * 10) * 10) / 10;
+      daily.push({ date, crane_id: cr.id, crane_name: cr.name, lifts, tonnage });
+      totalLifts += lifts;
+      totalTonnage += tonnage;
+    }
+  }
+
+  return {
+    daily_lifts: daily,
+    summary: {
+      total_lifts: totalLifts,
+      total_tonnage: Math.round(totalTonnage * 10) / 10,
+      avg_lifts_per_day: Math.round((totalLifts / 7) * 10) / 10,
+      avg_tonnage_per_day: Math.round((totalTonnage / 7) * 10) / 10,
+    },
+  };
+}
+
+/** Demo sensor diagnostics per crane. */
+export function getDemoDiagnostics(craneId: string): CraneDiagnosticsResponse {
+  const now = Date.now();
+  const isDemo002 = craneId === 'DEMO-002';
+  const isDemo003 = craneId === 'DEMO-003';
+
+  return {
+    crane_id: craneId,
+    crane_name: craneId === 'DEMO-001' ? 'Liebherr LTM 1300' : craneId === 'DEMO-002' ? 'Tadano GR-800XL' : 'XCMG QY70K-I',
+    overall_status: isDemo003 ? 'degraded' : isDemo002 ? 'degraded' : 'healthy',
+    sensors: [
+      { sensor: 'LiDAR (TF03-100)', status: 'healthy', last_reading: now - 1200, metrics: { distance_mm: 10320, signal_strength: 92 } },
+      { sensor: 'IMU (BNO055)', status: 'healthy', last_reading: now - 800, metrics: { pitch: 48.66, roll: -0.31, yaw: 112.5, calibration: 3 } },
+      { sensor: 'Radar (LD2461)', status: isDemo003 ? 'error' : 'healthy', last_reading: isDemo003 ? now - 3600000 : now - 1000, metrics: isDemo003 ? { targets: 0 } : { motion_detected: 'true', targets: 2 }, ...(isDemo003 ? { error_message: 'No response from radar module — check SPI connection' } : {}) },
+      { sensor: 'Anemometer', status: 'healthy', last_reading: now - 500, metrics: { wind_speed_kmh: 18.5, direction_deg: 180 } },
+      { sensor: 'Camera — OCR (Dashboard)', status: 'healthy', last_reading: now - 200, metrics: { fps: 5, brightness: 142, blur_score: 185 } },
+      { sensor: 'Camera — Cabin (Face)', status: isDemo002 ? 'degraded' : 'healthy', last_reading: isDemo002 ? now - 60000 : now - 100, metrics: isDemo002 ? { fps: 2, face_confidence: 0.42 } : { fps: 10, face_confidence: 0.93 }, ...(isDemo002 ? { error_message: 'Low frame rate — possible USB bandwidth issue' } : {}) },
+      { sensor: 'Camera — Boom (Vision)', status: 'healthy', last_reading: now - 5000, metrics: { fps: 0.2, inference_ms: 850, model: 'moondream-2b' } },
+    ],
+    last_updated: now,
+  };
+}
+
+/** Demo sites for Settings → Sites tab. */
+export function getDemoSites(): SiteListItem[] {
+  return [
+    {
+      id: 'SITE-001', name: 'Chennai Port Construction',
+      address: '10 VOC Port Road, Royapuram', city: 'Chennai', state: 'Tamil Nadu',
+      latitude: 13.0827, longitude: 80.2707, crane_count: 2,
+      manager_names: ['Anand Venkatesh'], status: 'active',
+    },
+    {
+      id: 'SITE-002', name: 'Bangalore Highway Bridge',
+      address: 'NH-44 Km 218, Hoskote', city: 'Bangalore', state: 'Karnataka',
+      latitude: 13.0695, longitude: 77.7876, crane_count: 1,
+      manager_names: ['Priya Nair', 'Karthik Subramanian'], status: 'active',
+    },
+  ];
+}
+
+/** Demo face enrollment response. */
+export function getDemoEnrollment(): EnrollmentResponse {
+  return { success: true, enrollment_status: 'pending', message: 'Enrollment queued. Face matching will be enabled once processed.' };
 }

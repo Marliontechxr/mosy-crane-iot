@@ -17,6 +17,7 @@ import { DailyStats } from '@/components/stats/DailyStats';
 import { WeeklyTrend, type DayData } from '@/components/stats/WeeklyTrend';
 import { AttendanceCalendar } from '@/components/stats/AttendanceCalendar';
 import { getShiftDataRange, getTodayShift } from '@/lib/offline-db';
+import { publishMessage } from '@/lib/mqtt-publish';
 
 interface StatsModeProps {
   onSwitchMode: () => void;
@@ -25,6 +26,8 @@ interface StatsModeProps {
 export function StatsMode({ onSwitchMode }: StatsModeProps) {
   const operator = useTelemetryStore((s) => s.operator);
   const alerts = useTelemetryStore((s) => s.alerts);
+  const craneId = useTelemetryStore((s) => s.craneId);
+  const checkOut = useTelemetryStore((s) => s.checkOut);
 
   const [dailyData, setDailyData] = useState({
     lifts: 0,
@@ -137,18 +140,42 @@ export function StatsMode({ onSwitchMode }: StatsModeProps) {
           </div>
         </div>
 
-        {/* Back button */}
-        <button
-          onClick={onSwitchMode}
-          className="flex items-center justify-center gap-2 rounded-lg bg-mosy-surface px-4 py-2 text-sm text-mosy-muted active:bg-slate-700 transition-colors"
-          type="button"
-          aria-label="Switch to guidance mode"
-        >
-          <svg width={16} height={16} viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 4l5 5H3l5-5z" />
-          </svg>
-          Guidance
-        </button>
+        {/* Navigation buttons */}
+        <div className="space-y-2">
+          <button
+            onClick={onSwitchMode}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-mosy-surface px-4 py-2 text-sm text-mosy-muted active:bg-slate-700 transition-colors"
+            type="button"
+            aria-label="Switch to guidance mode"
+          >
+            <svg width={16} height={16} viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4l5 5H3l5-5z" />
+            </svg>
+            Guidance
+          </button>
+
+          {/* Check Out button */}
+          <button
+            onClick={() => {
+              publishMessage(`mosy/${craneId}/operator/check-in`, {
+                timestamp: new Date().toISOString(),
+                crane_id: craneId,
+                operator_id: operator.id,
+                operator_name: operator.name,
+                action: 'check-out',
+              });
+              checkOut();
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-900/30 px-4 py-2 text-sm font-medium text-red-400 active:bg-red-900/50 transition-colors"
+            type="button"
+            aria-label="End shift and check out"
+          >
+            <svg width={16} height={16} viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm3 6.5H5v-1h6v1z" />
+            </svg>
+            Check Out
+          </button>
+        </div>
       </div>
 
       {/* Right content — stats */}

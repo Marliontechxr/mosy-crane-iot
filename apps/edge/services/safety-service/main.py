@@ -30,6 +30,10 @@ INFERENCE_FPS = float(os.environ.get("INFERENCE_FPS", "10"))
 
 # MQTT topics
 TOPIC_CABIN_VISION = f"mosy/{CRANE_ID}/vision/cabin"
+TOPIC_ALERT_WARNING = f"mosy/{CRANE_ID}/alerts/warning"
+
+# Sunglasses detection: both EAR values below this with face present
+_SUNGLASSES_EAR_THRESHOLD = 0.05
 
 _running = True
 _camera = None
@@ -65,6 +69,18 @@ def _read_frame(camera: object) -> Optional[np.ndarray]:
 
 
 # ---------------------------------------------------------------------------
+# Alert publishing helper
+# ---------------------------------------------------------------------------
+def _publish_alert(client: object, alert: dict) -> None:
+    """Publish an alert message to the warning alerts topic."""
+    try:
+        client.publish(TOPIC_ALERT_WARNING, json.dumps(alert), qos=1)  # type: ignore[union-attr]
+        log.info("alert_published", alert_id=alert.get("alert_id"), type=alert.get("type"))
+    except Exception:
+        log.exception("alert_publish_failed")
+
+
+# ---------------------------------------------------------------------------
 # Inference loop
 # ---------------------------------------------------------------------------
 def inference_loop(client: object, tracker: OperatorTracker) -> None:
@@ -96,6 +112,33 @@ def inference_loop(client: object, tracker: OperatorTracker) -> None:
 
             state = tracker.process_frame(frame)
             payload = tracker.to_mqtt_payload(state)
+
+            # Sunglasses detection: face present but eyes not trackable
+            if (
+                state.face_detected
+                and state.face_confidence > 0.6
+                and state.ear is not None
+                and state.ear.left_ear < _SUNGLASSES_EAR_THRESHOLD
+                and state.ear.right_ear < _SUNGLASSES_EAR_THRESHOLD
+            ):
+                _publish_alert(client, {
+                    "timestamp": time.time(),
+                    "crane_id": CRANE_ID,
+                    "alert_id": f"SG-{int(time.time())}",
+                    "level": "warning",
+                    "type": "sunglasses_detected",
+                    "title": "Sunglasses detected — PERCLOS unreliable",
+                    "description": (
+                        "Operator appears to be wearing sunglasses. "
+                        "Eye tracking accuracy is degraded. "
+                        "Please remove sunglasses for safety monitoring."
+                    ),
+                    "source": "camera",
+                    "values": {"face_confidence": state.face_confidence},
+                    "acknowledgement_required": False,
+                    "auto_recovery": True,
+                })
+
             client.publish(TOPIC_CABIN_VISION, json.dumps(payload), qos=1)  # type: ignore[union-attr]
 
         except Exception:

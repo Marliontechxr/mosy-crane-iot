@@ -29,6 +29,8 @@ interface TelemetryState {
   operator: OperatorInfo;
   /** LiDAR ground clearance in meters. */
   groundClearanceM: number;
+  /** Whether an operator has checked in for the current shift. */
+  checkedIn: boolean;
 
   setCraneId: (id: string) => void;
   updateTelemetry: (data: FusedTelemetry) => void;
@@ -36,6 +38,8 @@ interface TelemetryState {
   dismissAlert: (alertId: string) => void;
   setMqttConnected: (connected: boolean) => void;
   setOperator: (info: OperatorInfo) => void;
+  /** Reset operator state and return to check-in screen. */
+  checkOut: () => void;
 }
 
 export const useTelemetryStore = create<TelemetryState>((set) => ({
@@ -46,11 +50,12 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   maxAlertLevel: null,
   mqttConnected: false,
   operator: {
-    id: 'OP-001',
-    name: 'Rajesh Kumar',
-    shiftStart: Date.now(),
+    id: '',
+    name: '',
+    shiftStart: 0,
   },
   groundClearanceM: 0,
+  checkedIn: false,
 
   setCraneId: (id) => set({ craneId: id }),
 
@@ -91,5 +96,11 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
 
   setMqttConnected: (connected) => set({ mqttConnected: connected }),
 
-  setOperator: (info) => set({ operator: info }),
+  setOperator: (info) => set({ operator: info, checkedIn: true }),
+
+  checkOut: () =>
+    set({
+      operator: { id: '', name: '', shiftStart: 0 },
+      checkedIn: false,
+    }),
 }));

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { GuidanceMode } from './screens/GuidanceMode';
 import { StatsMode } from './screens/StatsMode';
+import { CheckInScreen } from './screens/CheckInScreen';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { useMqttConnection } from './hooks/useMqttConnection';
 import { useTelemetryStore } from './stores/telemetry-store';
@@ -13,6 +14,7 @@ export type AppMode = 'guidance' | 'stats';
 export function App() {
   const [mode, setMode] = useState<AppMode>('guidance');
   const isOnline = useTelemetryStore((s) => s.mqttConnected);
+  const checkedIn = useTelemetryStore((s) => s.checkedIn);
 
   // Connect to Jetson MQTT broker on mount
   useMqttConnection();
@@ -38,6 +40,16 @@ export function App() {
       window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
+
+  // Show check-in screen if no operator has started a shift
+  if (!checkedIn) {
+    return (
+      <div className="relative h-full w-full">
+        <ConnectionStatus connected={isOnline} />
+        <CheckInScreen />
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full w-full">

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -19,10 +20,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { OperatorListItem } from '@mosy/shared-types';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 export default function OperatorsPage() {
-  const { getAccessToken } = useAuth();
+  const { getAccessToken, hasRole } = useAuth();
   const router = useRouter();
   const [operators, setOperators] = useState<OperatorListItem[]>([]);
   const [search, setSearch] = useState('');
@@ -59,14 +60,22 @@ export default function OperatorsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Operators</CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <Input
-              placeholder="Search operators..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-3">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Input
+                placeholder="Search operators..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {hasRole('SiteManager') && (
+              <Button size="sm" onClick={() => router.push('/dashboard/operators/new')}>
+                <Plus className="mr-1 h-4 w-4" />
+                Add Operator
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>

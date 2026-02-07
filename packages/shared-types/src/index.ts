@@ -103,3 +103,26 @@ export type {
 } from './api';
 
 export { type UserRole, type ApiErrorCode, ROLE_IDS } from './api';
+
+// Control-Plane Types
+export type {
+  CreateCraneRequest,
+  UpdateCraneRequest,
+  CraneListItem,
+  CreateOperatorRequest,
+  UpdateOperatorRequest,
+  OperatorDetailResponse,
+  CalibrationProfileResponse,
+  ShiftReportListItem,
+  ShiftReportsResponse,
+  SafetyComplianceResponse,
+  ProductivityReportResponse,
+  SensorDiagnostic,
+  CraneDiagnosticsResponse,
+  SiteListItem,
+  CreateSiteRequest,
+  UpdateSiteRequest,
+  EnrollmentRequest,
+  EnrollmentResponse,
+  OperatorCheckInMessage,
+} from './api';
